@@ -23,9 +23,11 @@
 import inkilap from "./courses/inkilap.js";
 import edebiyat from "./courses/edebiyat.js";
 import analog from "./courses/analog.js";
+import alternatif from "./courses/alternatif.js";
+import sayisal from "./courses/sayisal.js";
 
 /* Order here = order shown across the app. */
-export const COURSES = [inkilap, edebiyat, analog];
+export const COURSES = [inkilap, edebiyat, analog, alternatif, sayisal];
 
 export function getCourse(courseId) {
   return COURSES.find((c) => c.id === courseId) || null;

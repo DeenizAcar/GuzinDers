@@ -17,7 +17,7 @@ framework yok, bağımlılık yok. Doğrudan **Netlify**'da (veya GitHub Pages't
 - **Gelişmiş Quiz Motoru** — Dört format: çoktan seçmeli, doğru/yanlış, boşluk doldurma,
   klasik/açık uçlu.
 - **🔁 Sınırsız (Dinamik) Test** — Her derste **100+ soruluk** hazır bir banka var
-  (toplam 300+ soru). Bir test bittiğinde **"Yeni test"** dersin, motor bankadan
+  (5 ders, toplam 500+ soru). Bir test bittiğinde **"Yeni test"** dersin, motor bankadan
   **tekrarsız ve karışık** yeni bir grup çeker; en çok yanıldığın konuları öne alır.
   **API/internet gerekmez** — pratik hiç bitmez. (İstersen Ayarlar'dan bir API anahtarı
   ekleyip soruları bir LLM'e de ürettirebilirsin; tamamen opsiyonel.)
@@ -69,7 +69,7 @@ publish directory **`.`** (zaten `netlify.toml`'dan okunur).
 
 ## 🔑 API Anahtarı (opsiyonel — banka zaten yeterli)
 
-> Bu adım **gerekli değildir.** 300+ soruluk banka API olmadan sınırsız test sağlar.
+> Bu adım **gerekli değildir.** 500+ soruluk banka API olmadan sınırsız test sağlar.
 > Yalnızca soruları bir yapay zekâya ürettirmek istersen kullan.
 
 1. Uygulamada sağ üstteki ⚙️ **Ayarlar**'a gir.
@@ -130,7 +130,9 @@ Mimari tamamen veriye dayalıdır. Yeni bir ders eklemek için:
 │   └── courses/
 │       ├── inkilap.js      # Atatürk İlkeleri ve İnkılap Tarihi
 │       ├── edebiyat.js     # Türk Dili ve Edebiyatı
-│       └── analog.js       # Analog Elektronik
+│       ├── analog.js       # Analog Elektronik
+│       ├── alternatif.js   # Alternatif Akım Devre Analizi
+│       └── sayisal.js      # Sayısal Tasarım
 └── js/
     ├── app.js              # Önyükleme: tema, gezinme, yönlendirme
     ├── router.js           # Hash tabanlı mini yönlendirici
