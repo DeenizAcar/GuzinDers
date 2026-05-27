@@ -1,0 +1,14 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Logs / deps (none expected — no build step — but just in case)
+node_modules/
+npm-debug.log*
+*.log
+
+# Local backups exported from the app
+guzin-ders-yedek-*.json

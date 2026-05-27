@@ -1,0 +1,14 @@
+# Güzin Ders — Netlify yapılandırması
+# Derleme (build) adımı yok: saf statik dosyalar doğrudan yayınlanır.
+
+[build]
+  publish = "."
+  command = ""
+
+# SPA fallback — var olmayan bir yol istenirse index.html dönsün.
+# (Uygulama hash tabanlı yönlendirme kullanır; bu kural yalnızca güvenlik ağıdır.
+#  Mevcut dosyalar (css/, js/, data/) bu kuraldan etkilenmeden normal servis edilir.)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

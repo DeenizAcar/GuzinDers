@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Güzin Ders · Çalışma Platformu</title>
+  <meta name="description" content="Deniz için kişisel final çalışma platformu — ders notları, çalışma kartları, notlar ve sınırsız quiz üretimi." />
+
+  <!-- Distinctive type: Fraunces (display serif), Spectral (reading), Hanken Grotesk (UI), JetBrains Mono (code).
+       All support Turkish (Latin Extended). System fallbacks are defined in CSS for offline use. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Hanken+Grotesk:wght@400..800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <!-- Decorative paper-grain layer (pure CSS, no images) -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- App header / top bar -->
+  <header class="topbar" id="topbar">
+    <a class="brand" href="#/" aria-label="Ana sayfa">
+      <span class="brand__mark">📚</span>
+      <span class="brand__text">
+        <span class="brand__name">Güzin Ders</span>
+        <span class="brand__sub">çalışma masası</span>
+      </span>
+    </a>
+
+    <nav class="topnav" id="topnav" aria-label="Birincil gezinme"></nav>
+
+    <div class="topbar__actions">
+      <button class="iconbtn" id="themeToggle" title="Tema değiştir" aria-label="Tema değiştir">
+        <span class="theme-icon-light">☀️</span>
+        <span class="theme-icon-dark">🌙</span>
+      </button>
+      <a class="iconbtn" href="#/settings" title="Ayarlar" aria-label="Ayarlar">⚙️</a>
+    </div>
+  </header>
+
+  <!-- Single mount point; views render here -->
+  <main id="app" class="app" aria-live="polite"></main>
+
+  <footer class="appfoot">
+    <span id="apiStatus" class="api-pill" title="LLM bağlantı durumu"></span>
+    <span>Güzin Ders · Deniz’in final çalışma platformu</span>
+  </footer>
+
+  <!-- Toast container -->
+  <div id="toasts" class="toasts" aria-live="assertive"></div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
