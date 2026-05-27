@@ -16,10 +16,11 @@ framework yok, bağımlılık yok. Doğrudan **Netlify**'da (veya GitHub Pages't
 - **Entegre Defter** — Her konu için kendi notlarını yaz; `localStorage`'a **otomatik kaydedilir**.
 - **Gelişmiş Quiz Motoru** — Dört format: çoktan seçmeli, doğru/yanlış, boşluk doldurma,
   klasik/açık uçlu.
-- **🔁 Sınırsız (Dinamik) Quiz Üretimi** — Bir test bittiğinde uygulama **durmaz**:
-  materyale ve **senin performansına** (en çok yanlış yaptığın konulara) göre LLM'den
-  yepyeni bir test üretir ve doğrudan ona geçer. API anahtarı yoksa hazır soru bankası
-  karıştırılarak pratik yine de hiç bitmez.
+- **🔁 Sınırsız (Dinamik) Test** — Her derste **100+ soruluk** hazır bir banka var
+  (toplam 300+ soru). Bir test bittiğinde **"Yeni test"** dersin, motor bankadan
+  **tekrarsız ve karışık** yeni bir grup çeker; en çok yanıldığın konuları öne alır.
+  **API/internet gerekmez** — pratik hiç bitmez. (İstersen Ayarlar'dan bir API anahtarı
+  ekleyip soruları bir LLM'e de ürettirebilirsin; tamamen opsiyonel.)
 - **Tema** — Sıcak "kâğıt" açık tema + odaklanma için koyu tema.
 
 ---
@@ -66,7 +67,10 @@ publish directory **`.`** (zaten `netlify.toml`'dan okunur).
 
 ---
 
-## 🔑 API Anahtarı (sınırsız quiz için)
+## 🔑 API Anahtarı (opsiyonel — banka zaten yeterli)
+
+> Bu adım **gerekli değildir.** 300+ soruluk banka API olmadan sınırsız test sağlar.
+> Yalnızca soruları bir yapay zekâya ürettirmek istersen kullan.
 
 1. Uygulamada sağ üstteki ⚙️ **Ayarlar**'a gir.
 2. Sağlayıcıyı seç: **Anthropic (Claude)** veya **OpenAI (GPT)**.

@@ -54,16 +54,56 @@ function llmParams(course, sourceTopics, avoidQuestions) {
   };
 }
 
-/* Offline fallback: filtered, shuffled seed questions. */
+/* Shuffle a COPY of an array (Fisher–Yates) without mutating the original. */
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* Pull a FRESH, non-repeating batch from the offline question bank.
+
+   This is the engine behind "Yeni test": every round draws questions that
+   haven't been served yet this session, biases the most-missed (weak) topics
+   to the front, and — once the eligible pool runs low — resets the rotation
+   so practice never runs out. With 100+ questions per course this yields many
+   distinct tests before anything repeats. */
 function seedQuiz(course) {
   const s = Settings.get();
-  let bank = seedsFor(course.id).filter((q) => s.enabledTypes.includes(q.type));
-  if (!bank.length) bank = seedsFor(course.id); // ignore filter if it empties the bank
-  for (let i = bank.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [bank[i], bank[j]] = [bank[j], bank[i]];
+  const need = Math.max(s.questionCount, 1);
+  const all = seedsFor(course.id);
+
+  // 1) Respect enabled question types (fall back to everything if that empties).
+  let pool = all.filter((q) => s.enabledTypes.includes(q.type));
+  if (!pool.length) pool = all.slice();
+
+  // 2) If opened from a single topic, prefer that topic — but only if it can
+  //    fill a whole round; otherwise stay course-wide for variety.
+  if (session && session.topicId) {
+    const tTitle = getTopic(course.id, session.topicId)?.title;
+    const topicPool = pool.filter((q) => q.topicTitle === tTitle);
+    if (topicPool.length >= need) pool = topicPool;
   }
-  return bank.slice(0, Math.max(s.questionCount, 1));
+
+  // 3) Drop questions already asked this session; reset when nearly drained.
+  const asked = new Set((session && session.asked) || []);
+  let fresh = pool.filter((q) => !asked.has(q.question));
+  if (fresh.length < need) {
+    if (session) session.asked = [];      // bank cycled → start a clean rotation
+    fresh = pool.slice();
+  }
+
+  // 4) Weak-topic bias: serve most-missed topics first, then the rest.
+  const weak = new Set(Progress.weakTopics(course.id));
+  const ordered = weak.size
+    ? shuffled(fresh.filter((q) => weak.has(q.topicTitle)))
+        .concat(shuffled(fresh.filter((q) => !weak.has(q.topicTitle))))
+    : shuffled(fresh);
+
+  return ordered.slice(0, need);
 }
 
 /* ------------------------------------------------------------- Entry point */
@@ -94,8 +134,8 @@ export async function render({ params }) {
 
   if (!questions || !questions.length) {
     mount(`<div class="empty"><div class="big">🗂️</div><h2>Soru bulunamadı</h2>
-      <p>Bu ders için hazır soru yok. Ayarlardan bir API anahtarı ekleyerek
-      sınırsız quiz üretebilirsin. <a href="#/settings" style="color:var(--accent)">Ayarlar →</a></p></div>`);
+      <p>Bu ders için soru bankası henüz hazır değil. Ayarlardan etkin soru
+      türlerini kontrol edebilirsin. <a href="#/settings" style="color:var(--accent)">Ayarlar →</a></p></div>`);
     return;
   }
   startRound(questions, topicLabel);
@@ -117,7 +157,9 @@ function renderLoading(course, topicLabel, msg) {
 
 function startRound(questions, topicLabel) {
   session.questions = questions;
-  session.asked = session.asked.concat(questions.map((q) => q.question)).slice(-40);
+  // Keep the FULL session history so "Yeni test" can skip everything already
+  // asked until the bank cycles (seedQuiz resets it when the pool runs low).
+  session.asked = session.asked.concat(questions.map((q) => q.question));
   session.round += 1;
 
   const { course, topicId } = session;
@@ -134,7 +176,7 @@ function startRound(questions, topicLabel) {
       <div class="page-head" style="margin-bottom:18px">
         <span class="eyebrow">Quiz · ${session.round}. tur</span>
         <h1 class="page-title" style="font-size:clamp(24px,4vw,34px)">${escapeHtml(topicLabel || course.title)}</h1>
-        <p class="page-sub">${questions.length} soru · ${escapeHtml(diffLabel(s.difficulty))}${Settings.hasKey() ? " · yapay zeka üretimi" : " · hazır sorular"}</p>
+        <p class="page-sub">${questions.length} soru · ${escapeHtml(diffLabel(s.difficulty))}${Settings.hasKey() ? " · yapay zeka üretimi" : " · soru bankası"}</p>
       </div>
 
       <div id="questions">
@@ -367,7 +409,7 @@ function resultHeroHtml(sum) {
       ${weak}
       <div id="nextSlot"></div>
       <div class="btn-row" style="justify-content:center;margin-top:18px" id="resultBtns">
-        <button class="btn btn--primary" id="genNext">${Settings.hasKey() ? "✨ Yeni quiz üret" : "🔀 Yeni quiz (karışık)"}</button>
+        <button class="btn btn--primary" id="genNext">${Settings.hasKey() ? "✨ Yeni quiz üret" : "🔀 Yeni test (bankadan)"}</button>
         <a class="btn btn--ghost" href="#/study/${encodeURIComponent(session.course.id)}/${encodeURIComponent(session.topicId || (session.course.topics[0]?.id || ""))}">Konuya dön</a>
         <a class="btn btn--ghost" href="#/">Ana sayfa</a>
       </div>
@@ -380,18 +422,23 @@ function wireResultActions() {
   if (btn) btn.addEventListener("click", () => generateNext(true));
 }
 
-/* The "must not stop" loop: auto-generate the next quiz when enabled. */
+/* The "must not stop" loop: keep practice flowing after each test. */
 function maybeAutoGenerateNext() {
   const s = Settings.get();
   if (s.autoNext && Settings.hasKey()) {
-    generateNext(false);
-  } else if (!Settings.hasKey()) {
+    generateNext(false);                 // online: auto-roll into an LLM quiz
+    return;
+  }
+  // Offline: let the learner review the score, then pull a fresh batch on demand.
+  if (!Settings.hasKey()) {
     const nextSlot = document.getElementById("nextSlot");
     if (nextSlot) {
+      const bankSize = seedsFor(session.course.id).length;
       nextSlot.innerHTML = `<div class="note-banner" style="margin-top:16px;text-align:left">
-        <span style="font-size:18px">💡</span>
-        <span>Sınırsız ve performansına göre <b>otomatik üretilen</b> quizler için
-        Ayarlar'dan kişisel API anahtarını ekle. Şimdilik hazır sorular karıştırılıyor.</span>
+        <span style="font-size:18px">🗂️</span>
+        <span>Bu derste <b>${bankSize}</b> soruluk bir banka var. Her <b>Yeni test</b>'te
+        farklı ve tekrarsız sorular gelir; en çok yanıldığın konular öne alınır —
+        yani pratik hiç bitmez.</span>
       </div>`;
     }
   }
@@ -403,7 +450,7 @@ async function generateNext(manual) {
   const topicLabel = topicId ? getTopic(course.id, topicId)?.title : null;
 
   if (!Settings.hasKey()) {
-    // Offline: just reshuffle the seed bank for endless practice.
+    // Offline (no API): pull a fresh, non-repeating batch from the bank.
     startRound(seedQuiz(course), topicLabel);
     return;
   }
